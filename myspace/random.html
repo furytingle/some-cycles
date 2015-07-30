@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+<script src= "http://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+<style>
+a{
+  text-decoration: none;
+}
+</style>
+</head>
+
+  <script>
+  var app = angular.module('myApp', []);
+
+  app.filter('offset', function(){
+    return function(input, start){
+      start = parseInt(start, 6);
+      return input.slice(start);
+    };
+  });
+
+  app.controller('ctrl',function Main($scope, $http){
+    $scope.usersPerPage = 25;
+    $scope.currentPage = 0;
+    $scope.users = [];
+    $scope.getinfo = function (){
+    $http.get("https://randomuser.me/api/?results=100").success(function(data){
+      $scope.users.push.apply($scope.users, data.results);
+    }).error(function(data,status){
+      alert('some error');
+    });
+  }
+
+    $scope.orderByField = 'user.name.first';
+    $scope.reverseSort = false;
+
+    $scope.range = function(){
+      var rangeSize = 4;
+      var ret = [];
+      var start;
+      start = $scope.currentPage;
+      if (start > $scope.pageCount()-rangeSize){
+        start = $scope.pageCount()-rangeSize+1;
+      }
+      for (var i=start; i<start+rangeSize; i++){
+        ret.push(i);
+      }
+      return ret;
+    };
+    $scope.prevPage = function(){
+      if ($scope.currentPage > 0){
+        $scope.currentPage--;
+      }
+    };
+
+    $scope.prevPageDisabled = function(){
+      return $scope.currentPage === 0 ? "disabled" : "";
+    };
+
+    $scope.pageCount = function(){
+      return Math.ceil($scope.users.length/$scope.usersPerPage-1);
+    };
+
+    $scope.nextPage = function(){
+      if($scope.currentPage < $scope.pageCount()){
+        $scope.currentPage++;
+      }
+    };
+
+    $scope.nextPageDisabled = function(){
+      return $scope.currentPage === $scope.pageCount() ? "disabled" : "";
+    };
+
+    $scope.setPage = function(n){
+      $scope.currentPage = n;
+    };
+  });
+  </script>
+<body ng-app="myApp">
+    <div ng-controller="ctrl">
+    <center><button ng-click="getinfo()">Get info</button></center>
+    <table align="center">
+      <thead>
+        <tr>
+          <th>N</th>
+          <th><a href="#" ng-click="orderByField='user.name.first';reverseSort = !reverseSort">Name
+          <span ng-show="orderByField == 'user.name.first'"><span ng-show="!reverseSort">^</span>
+          <span ng-show="reverseSort">v</span></span></a>
+          <a href="#" ng-click="orderByField='user.name.last';reverseSort = !reverseSort">Surname
+          <span ng-show="orderByField == 'user.name.last'"><span ng-show="!reverseSort">^</span>
+          <span ng-show="reverseSort">v</span></span></a></th>
+          <th><a href="#" ng-click="orderByField='user.email';reverseSort = !reverseSort">Email
+          <span ng-show="orderByField == 'user.email'"><span ng-show="!reverseSort">^</span>
+          <span ng-show="reverseSort">v</span></span></a></th>
+          <th><a href="#" ng-click="orderByField='user.username';reverseSort = !reverseSort">Username
+          <span ng-show="orderByField == 'user.username'"><span ng-show="!reverseSort">^</span>
+          <span ng-show="reverseSort">v</span></span></a></th>
+          <th><a href="#" ng-click="orderByField='user.dob';reverseSort = !reverseSort">Date of birth
+          <span ng-show="orderByField == 'user.dob'"><span ng-show="!reverseSort">^</span>
+          <span ng-show="reverseSort">v</span></span></a></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="x in users | orderBy: orderByField:reverseSort | offset: currentPage*usersPerPage | limitTo: usersPerPage">
+        <td>{{$index+1}}</td>
+        <td>{{x.user.name.first + ' ' + x.user.name.last}}</td>
+        <td>{{x.user.email}}</td>
+        <td>{{x.user.username}}</td>
+        <td>{{x.user.dob | date: 'dd-MM-yyyy'}}</td>
+      </tr>
+    </tbody>
+    <tfoot>
+      <td colspan="5">
+        <div>
+          <table align="center">
+            <tr>
+              <td ng-class="prevPageDisabled()">
+              <a href ng-click="prevPage()">Back</a>
+            </td>
+            <td ng-repeat="n in range()" ng-class="{active: n==currentPage}" ng-click="setPage(n)">
+              <a href="#">{{n+1}}</a>
+            </td>
+            <td ng-class="nextPageDisabled()">
+              <a href ng-click="nextPage()">Forward</a>
+            </td>
+          </table>
+        </div>
+      </td>
+    </tfoot>
+  </table>
+</div>
+</body>
+</html>
